@@ -11,8 +11,8 @@ images:
   database:
     repository: postgis/postgis
     tag: "9.6-2.5"
-  database-init:
-    repository: jgoclawski/wget
+  databaseinit:
+    repository: busybox
     tag: "latest"
     db: "db.backup"
   frontend:

@@ -42,9 +42,9 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
       initContainers:
         - name: db-init-container
-          image: "{{ .Values.images.database-init.repository }}:{{ .Values.images.database-init.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.images.databaseinit.repository }}:{{ .Values.images.databaseinit.tag | default .Chart.AppVersion }}"
           workingDir: /data
-          command: wget "ftp.deltares.nl/kubernetes/database{{ .Values.images.database-init.db }}
+          command: ["touch", "test.txt"]
           volumeMounts:
             - name: nfsvol 
               mountPath: /data
