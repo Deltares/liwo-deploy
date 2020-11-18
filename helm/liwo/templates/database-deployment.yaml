@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.database.name }}
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+spec:
+{{- if not .Values.database.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Values.database.name }}
+  template:
+    metadata:
+    {{- with .Values.database.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        app: {{ .Values.database.name }}
+    spec:
+      volumes:
+        - name: nfsvol
+          persistentVolumeClaim:
+            claimName: {{ .Values.database.pvc.name }} 
+      containers:
+        - name: {{ .Values.database.name }}
+          image: "{{ .Values.images.database.repository }}:{{ .Values.images.database.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.database.service.port }}
+          resources:
+            {{- toYaml .Values.database.resources | nindent 12 }}
+          env:
+            {{- range $key, $value := .Values.database.environment_variables }}
+            - name: {{ $key }}
+              value: {{ $value }}
+            {{- end }}
+          volumeMounts:
+            - name: nfsvol 
+              mountPath: /docker-entrypoint-initdb.d
+      initContainers:
+        - name: db-init-container
+          image: "{{ .Values.images.database-init.repository }}:{{ .Values.images.database-init.tag | default .Chart.AppVersion }}"
+          workingDir: /data
+          command: wget "ftp.deltares.nl/kubernetes/database{{ .Values.images.database-init.db }}
+          volumeMounts:
+            - name: nfsvol 
+              mountPath: /data
+

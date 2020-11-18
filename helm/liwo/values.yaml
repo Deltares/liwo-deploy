@@ -1,0 +1,117 @@
+# Default values for LIWO.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+images:
+  backend: 
+    repository: deltares/liwo-services
+    tag: "latest"
+  database:
+    repository: postgis/postgis
+    tag: "9.6-2.5"
+  database-init:
+    repository: jgoclawski/wget
+    tag: "latest"
+    db: "db.backup"
+  frontend:
+    repository: deltares/liwo-static
+    tag: "latest"
+  imagePullSecrets: []
+
+backend:
+  name: "liwo-backend"
+  podAnnotations: {}
+
+  service:
+    type: ClusterIP
+    port: 5000
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  resources: {}
+
+database:
+  name: "liwo-database"
+  podAnnotations: {}
+
+  service:
+    type: ClusterIP
+    port: 5432
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  environment_variables:
+    POSTGRES_PASSWORD: 
+    POSTGRES_USER: 
+    POSTGRES_DB: 
+
+  pv:
+    name: nfs-pv-overstroomik
+    nfs-path: ""
+    nfs-server: ""
+
+  pvc:
+    name: nfs-pvc-overstroomik
+
+  resources: {}
+
+frontend:
+  name: "liwo-frontend"
+  podAnnotations: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  
+  resources: {}
+
+geoserver:
+  name: "overstroomik-geoserver"
+  podAnnotations: {}
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  resources: {}
+
+ingress:
+  enabled: true
+  annotations: {}
+  # gcloud compute addresses create overstroomik-static-ip --global
+  # gcloud endpoints services deploy openapi.yaml
+  # kubernetes.io/ingress.global-static-ip-name: "overstroomik-static-ip"
+  services:
+    - name: overstroomik-geoserver
+      path: /geoserver/*
+      port: 8080
+    - name: overstroomik-backend
+      path: /*
+      port: 80
