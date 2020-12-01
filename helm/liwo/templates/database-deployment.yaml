@@ -21,9 +21,10 @@ spec:
         app: {{ .Values.database.name }}
     spec:
       volumes:
-        - name: nfsvol
-          persistentVolumeClaim:
-            claimName: {{ .Values.database.pvc.name }} 
+        - name: nfs-volume
+          nfs:
+            server: {{ .Values.nfs.server }}
+            path: {{ .Values.nfs.path }}
       containers:
         - name: {{ .Values.database.name }}
           image: "{{ .Values.images.database.repository }}:{{ .Values.images.database.tag | default .Chart.AppVersion }}"
@@ -38,14 +39,9 @@ spec:
               value: {{ $value }}
             {{- end }}
           volumeMounts:
-            - name: nfsvol 
+            - name: nfs-volume
               mountPath: /docker-entrypoint-initdb.d
-      initContainers:
-        - name: db-init-container
-          image: "{{ .Values.images.databaseinit.repository }}:{{ .Values.images.databaseinit.tag | default .Chart.AppVersion }}"
-          workingDir: /data
-          command: ["touch", "test.txt"]
-          volumeMounts:
-            - name: nfsvol 
-              mountPath: /data
-
+              subPath: database/init
+            - name: nfs-volume
+              mountPath: /var/lib/postgresql/data
+              subPath: database/data

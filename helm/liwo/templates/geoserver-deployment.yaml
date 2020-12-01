@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.geoserver.name }}
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+spec:
+{{- if not .Values.geoserver.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Values.geoserver.name }}
+  template:
+    metadata:
+    {{- with .Values.geoserver.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        app: {{ .Values.geoserver.name }}
+    spec:
+      volumes:
+        - name: nfs-volume
+          nfs:
+            server: {{ .Values.nfs.server }}
+            path: {{ .Values.nfs.path }}
+      containers:
+        - name: overstroomik-geoserver
+          image: "{{ .Values.images.geoserver.repository }}:{{ .Values.images.geoserver.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.geoserver.service.port }}
+          volumeMounts:
+            - name: nfs-volume
+              mountPath: /var/local/geoserver
+              subPath: geoserver/data
+          resources:
+            {{- toYaml .Values.geoserver.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /geoserver/web/
+              port: {{ .Values.geoserver.service.port }}
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5

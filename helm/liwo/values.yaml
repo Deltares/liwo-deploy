@@ -57,14 +57,6 @@ database:
     POSTGRES_USER: 
     POSTGRES_DB: 
 
-  pv:
-    name: nfs-pv-overstroomik
-    nfs-path: ""
-    nfs-server: ""
-
-  pvc:
-    name: nfs-pvc-overstroomik
-
   resources: {}
 
 frontend:
@@ -101,6 +93,10 @@ geoserver:
     # targetMemoryUtilizationPercentage: 80
 
   resources: {}
+
+nfs:
+  path:
+  server:
 
 ingress:
   enabled: true
