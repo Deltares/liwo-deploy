@@ -26,7 +26,7 @@ spec:
             server: {{ .Values.nfs.server }}
             path: {{ .Values.nfs.path }}
       containers:
-        - name: overstroomik-geoserver
+        - name: {{ .Values.geoserver.name }}
           image: "{{ .Values.images.geoserver.repository }}:{{ .Values.images.geoserver.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           ports:

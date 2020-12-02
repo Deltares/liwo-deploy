@@ -28,3 +28,9 @@ spec:
             - containerPort: {{ .Values.backend.service.port }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+          env:
+            {{- range .Values.database.environment_variables }}
+            - name: {{ .key }}
+              value: {{ .value }}
+            {{- end }}
+

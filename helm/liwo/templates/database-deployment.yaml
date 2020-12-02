@@ -34,9 +34,9 @@ spec:
           resources:
             {{- toYaml .Values.database.resources | nindent 12 }}
           env:
-            {{- range $key, $value := .Values.database.environment_variables }}
-            - name: {{ $key }}
-              value: {{ $value }}
+            {{- range .Values.database.environment_variables }}
+            - name: {{ .key }}
+              value: {{ .value }}
             {{- end }}
           volumeMounts:
             - name: nfs-volume

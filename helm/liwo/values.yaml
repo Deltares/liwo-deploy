@@ -11,14 +11,14 @@ images:
   database:
     repository: postgis/postgis
     tag: "9.6-2.5"
-  databaseinit:
-    repository: busybox
-    tag: "latest"
-    db: "db.backup"
+  geoserver:
+    repository: oscarfonts/geoserver
+    tag: "2.12.1"
   frontend:
     repository: deltares/liwo-static
     tag: "latest"
   imagePullSecrets: []
+  imagePullPolicy: Always
 
 backend:
   name: "liwo-backend"
@@ -34,6 +34,9 @@ backend:
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
+  environment_variables:
+    - key: SQLALCHEMY_DATABASE_URI
+      value: 
 
   resources: {}
 
@@ -53,9 +56,12 @@ database:
     # targetMemoryUtilizationPercentage: 80
 
   environment_variables:
-    POSTGRES_PASSWORD: 
-    POSTGRES_USER: 
-    POSTGRES_DB: 
+    - key: POSTGRES_PASSWORD
+      value:
+    - key: POSTGRES_USER
+      value:
+    - key: POSTGRES_DB
+      value:
 
   resources: {}
 
@@ -74,11 +80,14 @@ frontend:
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
+  environment_variables:
+    - key: https_proxy
+      value: webproxy.rws.nl:8080
   
   resources: {}
 
 geoserver:
-  name: "overstroomik-geoserver"
+  name: "liwo-geoserver"
   podAnnotations: {}
 
   service:
@@ -99,15 +108,20 @@ nfs:
   server:
 
 ingress:
-  enabled: true
+  environment: rws
+  host: 
+  enabled: false
   annotations: {}
   # gcloud compute addresses create overstroomik-static-ip --global
   # gcloud endpoints services deploy openapi.yaml
   # kubernetes.io/ingress.global-static-ip-name: "overstroomik-static-ip"
   services:
-    - name: overstroomik-geoserver
-      path: /geoserver/*
+    - name: liwo-geoserver
+      path: /geoserver/
       port: 8080
-    - name: overstroomik-backend
-      path: /*
+    - name: liwo-backend
+      path: /liwo.ws/
+      port: 5000
+    - name: liwo-frontend
+      path: /
       port: 80

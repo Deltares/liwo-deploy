@@ -20,11 +20,23 @@ spec:
       labels:
         app: {{ .Values.frontend.name }}
     spec:
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.frontend.name }}-configmap
       containers:
         - name: {{ .Values.frontend.name }}
           image: "{{ .Values.images.frontend.repository }}:{{ .Values.images.frontend.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           ports:
             - containerPort: {{ .Values.frontend.service.port }}
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/nginx/html/config/webconfig.json
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
+          env:
+            {{- range .Values.database.environment_variables }}
+            - name: {{ .key }}
+              value: {{ .value }}
+            {{- end }}
