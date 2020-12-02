@@ -29,7 +29,7 @@ spec:
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
           env:
-            {{- range .Values.database.environment_variables }}
+            {{- range .Values.backend.environment_variables }}
             - name: {{ .key }}
               value: {{ .value }}
             {{- end }}
