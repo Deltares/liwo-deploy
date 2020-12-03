@@ -33,6 +33,7 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /usr/share/nginx/html/config/webconfig.json
+              subPath: webconfig.json
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
           env:
