@@ -36,6 +36,11 @@ spec:
               mountPath: /var/local/geoserver
           resources:
             {{- toYaml .Values.geoserver.resources | nindent 12 }}
+          env:
+            {{- range .Values.geoserver.environment_variables }}
+            - name: {{ .key }}
+              value: {{ .value }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /geoserver/web/
@@ -48,7 +53,7 @@ spec:
         - name: download-data
           image: eu.gcr.io/liwo-11205260-011/cloudsync
           command: ['sh', '-c', 'gsutil cp gs://liwo-data/data-volledig.zip . && unzip data-volledig.zip']
-          workdir: /data
+          workingDir: /data
           volumeMounts:
             - name: nfs-volume
               mountPath: /data
