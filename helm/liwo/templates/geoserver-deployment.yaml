@@ -54,6 +54,11 @@ spec:
           image: eu.gcr.io/liwo-11205260-011/cloudsync
           command: ['sh', '-c', 'gsutil cp gs://liwo-data/data-volledig.zip . && unzip data-volledig.zip']
           workingDir: /data
+          env:
+            {{- range .Values.geoserver.environment_variables_init }}
+            - name: {{ .key }}
+              value: {{ .value }}
+            {{- end }}
           volumeMounts:
             - name: nfs-volume
               mountPath: /data
