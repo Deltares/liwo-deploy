@@ -42,6 +42,6 @@ spec:
             - name: nfs-volume
               mountPath: /docker-entrypoint-initdb.d
               subPath: database/init
-            - name: nfs-volume
-              mountPath: /var/lib/postgresql/data
-              subPath: database/data
+            # - name: nfs-volume
+            #   mountPath: /var/lib/postgresql/data
+            #   subPath: database/data

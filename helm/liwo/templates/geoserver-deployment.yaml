@@ -34,7 +34,6 @@ spec:
           volumeMounts:
             - name: nfs-volume
               mountPath: /var/local/geoserver
-              subPath: geoserver/data
           resources:
             {{- toYaml .Values.geoserver.resources | nindent 12 }}
           readinessProbe:
@@ -45,3 +44,11 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 5
+      initContainers:
+        - name: download-data
+          image: eu.gcr.io/liwo-11205260-011/cloudsync
+          command: ['sh', '-c', 'gsutil cp gs://liwo-data/data-volledig.zip . && unzip data-volledig.zip']
+          workdir: /data
+          volumeMounts:
+            - name: nfs-volume
+              mountPath: /data
