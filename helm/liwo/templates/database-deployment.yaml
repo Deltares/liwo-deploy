@@ -41,7 +41,21 @@ spec:
           volumeMounts:
             - name: nfs-volume
               mountPath: /docker-entrypoint-initdb.d
-              subPath: database/init
+              subPath: database
             # - name: nfs-volume
             #   mountPath: /var/lib/postgresql/data
             #   subPath: database/data
+      initContainers:
+        - name: download-data
+          image: eu.gcr.io/liwo-11205260-011/cloudsync
+          command: ['sh', '-c']
+          args: ['mkdir database; echo "download database dump"; gsutil cp gs://liwo-data/db_liwo.backup20201208 database/db.backup; gsutil cp gs://liwo-data/load-db.sh database/load-db.sh']
+          workingDir: /data
+          env:
+            {{- range .Values.database.environment_variables_init }}
+            - name: {{ .key }}
+              value: {{ .value }}
+            {{- end }}
+          volumeMounts:
+            - name: nfs-volume
+              mountPath: /data
