@@ -4,6 +4,8 @@ metadata:
   name: {{ .Values.frontend.name }}
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/frontend-configmap.yaml") . | sha256sum }}
 spec:
 {{- if not .Values.frontend.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}

@@ -20,11 +20,16 @@ spec:
       labels:
         app: {{ .Values.geoserver.name }}
     spec:
-      volumes:
-        - name: nfs-volume
+      volumes:        
+        - name: geoserver-volume
+        {{- if .Values.RWS }}
           nfs:
             server: {{ .Values.nfs.server }}
             path: {{ .Values.nfs.path }}
+        {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ default "pvc-geoserver" .Values.geoserver.volumeName }}
+        {{- end }}
       containers:
         - name: {{ .Values.geoserver.name }}
           image: "{{ .Values.images.geoserver.repository }}:{{ .Values.images.geoserver.tag | default .Chart.AppVersion }}"
@@ -32,8 +37,9 @@ spec:
           ports:
             - containerPort: {{ .Values.geoserver.service.port }}
           volumeMounts:
-            - name: nfs-volume
+            - name: geoserver-volume
               mountPath: /var/local/geoserver
+              subPath: geoserver/data
           resources:
             {{- toYaml .Values.geoserver.resources | nindent 12 }}
           env:
@@ -46,13 +52,14 @@ spec:
               path: /geoserver/web/
               port: {{ .Values.geoserver.service.port }}
               scheme: HTTP
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 30
-            failureThreshold: 5
+            failureThreshold: 10
       initContainers:
         - name: download-data
           image: eu.gcr.io/liwo-11205260-011/cloudsync
-          command: ['sh', '-c', 'gsutil cp gs://liwo-data/data-volledig.zip . && unzip data-volledig.zip']
+          command: ['sh', '-c']
+          args: ['if [ ! -f geoserver/data-volledig.zip ]; then mkdir geoserver; echo "download geoserver data"; gsutil cp gs://liwo-data/data-volledig.zip geoserver/data-volledig.zip; cd geoserver; unzip data-volledig.zip; fi']
           workingDir: /data
           env:
             {{- range .Values.geoserver.environment_variables_init }}
@@ -60,5 +67,5 @@ spec:
               value: {{ .value }}
             {{- end }}
           volumeMounts:
-            - name: nfs-volume
+            - name: geoserver-volume
               mountPath: /data

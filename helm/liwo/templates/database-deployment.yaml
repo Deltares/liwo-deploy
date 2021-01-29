@@ -20,11 +20,16 @@ spec:
       labels:
         app: {{ .Values.database.name }}
     spec:
-      volumes:
-        - name: nfs-volume
+      volumes:        
+        - name: database-volume
+        {{- if .Values.RWS }}
           nfs:
             server: {{ .Values.nfs.server }}
             path: {{ .Values.nfs.path }}
+        {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ default "pvc-database" .Values.database.volumeName }}
+        {{- end }}
       containers:
         - name: {{ .Values.database.name }}
           image: "{{ .Values.images.database.repository }}:{{ .Values.images.database.tag | default .Chart.AppVersion }}"
@@ -39,7 +44,7 @@ spec:
               value: {{ .value }}
             {{- end }}
           volumeMounts:
-            - name: nfs-volume
+            - name: database-volume
               mountPath: /docker-entrypoint-initdb.d
               subPath: database
             # - name: nfs-volume
@@ -57,5 +62,5 @@ spec:
               value: {{ .value }}
             {{- end }}
           volumeMounts:
-            - name: nfs-volume
+            - name: database-volume
               mountPath: /data
