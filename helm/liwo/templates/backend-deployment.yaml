@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.backend.name }}
+  name: {{ .Values.prefix }}-{{ .Values.backend.name }}
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 spec:
@@ -10,7 +10,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.backend.name }}
+      app: {{ .Values.prefix }}-{{ .Values.backend.name }}
   template:
     metadata:
     {{- with .Values.backend.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        app: {{ .Values.backend.name }}
+        app: {{ .Values.prefix }}-{{ .Values.backend.name }}
     spec:
       volumes:        
         - name: backend-volume
@@ -28,7 +28,7 @@ spec:
             path: {{ .Values.nfs.path }}
         {{- else }}
           persistentVolumeClaim:
-            claimName: {{ default "pvc-backend" .Values.backend.volumeName }}
+            claimName: {{ .Values.prefix }}-{{ default "pvc-backend" .Values.backend.volumeName }}
         {{- end }}
       containers:
         - name: {{ .Values.backend.name }}

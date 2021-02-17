@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.database.name }}
+  name: {{ .Values.prefix }}-{{ .Values.database.name }}
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 spec:
@@ -10,7 +10,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.database.name }}
+      app: {{ .Values.prefix }}-{{ .Values.database.name }}
   template:
     metadata:
     {{- with .Values.database.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        app: {{ .Values.database.name }}
+        app: {{ .Values.prefix }}-{{ .Values.database.name }}
     spec:
       volumes:        
         - name: database-volume
@@ -28,7 +28,7 @@ spec:
             path: {{ .Values.nfs.path }}
         {{- else }}
           persistentVolumeClaim:
-            claimName: {{ default "pvc-database" .Values.database.volumeName }}
+            claimName: {{ .Values.prefix }}-{{ default "pvc-database" .Values.database.volumeName }}
         {{- end }}
       containers:
         - name: {{ .Values.database.name }}

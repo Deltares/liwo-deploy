@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ default "pvc-geoserver" .Values.geoserver.volumeName }}
+  name: {{ .Values.prefix }}-{{ default "pvc-geoserver" .Values.geoserver.volumeName }}
 spec:
   accessModes:
     - ReadWriteOnce

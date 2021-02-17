@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.frontend.name }}
+  name: {{ .Values.prefix }}-{{ .Values.frontend.name }}
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
   annotations:
@@ -12,7 +12,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.frontend.name }}
+      app: {{ .Values.prefix }}-{{ .Values.frontend.name }}
   template:
     metadata:
     {{- with .Values.frontend.podAnnotations }}
@@ -20,12 +20,12 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        app: {{ .Values.frontend.name }}
+        app: {{ .Values.prefix }}-{{ .Values.frontend.name }}
     spec:
       volumes:
         - name: config
           configMap:
-            name: {{ .Values.frontend.name }}-configmap
+            name: {{ .Values.prefix }}-{{ .Values.frontend.name }}-configmap
       containers:
         - name: {{ .Values.frontend.name }}
           image: "{{ .Values.images.frontend.repository }}:{{ .Values.images.frontend.tag | default .Chart.AppVersion }}"

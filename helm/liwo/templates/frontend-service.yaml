@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.frontend.name }}
+  name: {{ .Values.prefix }}-{{ .Values.frontend.name }}
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 spec:
@@ -11,4 +11,4 @@ spec:
       targetPort: 80
       protocol: TCP
   selector:
-    app: {{ .Values.frontend.name }}
+    app: {{ .Values.prefix }}-{{ .Values.frontend.name }}

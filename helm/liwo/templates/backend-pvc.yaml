@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ default "pvc-backend" .Values.backend.volumeName }}
+  name: {{ .Values.prefix }}-{{ default "pvc-backend" .Values.backend.volumeName }}
 spec:
   accessModes:
     - ReadWriteOnce

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.geoserver.name }}
+  name: {{ .Values.prefix }}-{{ .Values.geoserver.name }}
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 spec:
@@ -10,7 +10,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.geoserver.name }}
+      app: {{ .Values.prefix }}-{{ .Values.geoserver.name }}
   template:
     metadata:
     {{- with .Values.geoserver.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        app: {{ .Values.geoserver.name }}
+        app: {{ .Values.prefix }}-{{ .Values.geoserver.name }}
     spec:
       volumes:        
         - name: geoserver-volume
@@ -28,7 +28,7 @@ spec:
             path: {{ .Values.nfs.path }}
         {{- else }}
           persistentVolumeClaim:
-            claimName: {{ default "pvc-geoserver" .Values.geoserver.volumeName }}
+            claimName: {{ .Values.prefix }}-{{ default "pvc-geoserver" .Values.geoserver.volumeName }}
         {{- end }}
       containers:
         - name: {{ .Values.geoserver.name }}
