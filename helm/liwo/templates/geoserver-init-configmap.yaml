@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.prefix }}-{{ .Values.geoserver.name }}-init-configmap
+data:
+  entrypoint.sh: |-
+    #!/bin/bash
+
+    FILE=geoserver/{{ .Values.datasets.geoserver.data }}
+    if [ -f "$FILE" ]; then
+        echo "$FILE exists."
+        echo "data already available don't download/unzip again"
+    else 
+        echo "$FILE does not exist, download and unzip geoserver data"
+        mkdir -p geoserver
+        gsutil cp gs://liwo-data/{{ .Values.datasets.geoserver.data }} geoserver/{{ .Values.datasets.geoserver.data }}
+        cd geoserver && unzip -o {{ .Values.datasets.geoserver.data }}
+    fi
+
+
+    for file in $(find $GEOSERVER_DATA_DIR -name 'datastore.xml')
+    do
+      echo edit database configuration in $file
+      sed -i -r "s/(\s<entry\skey=\"database\">)(.*)(<\/entry>)/\1$POSTGRES_DB\3/g" $file
+      sed -i -r "s/(\s<entry\skey=\"port\">)(.*)(<\/entry>)/\1$POSTGRES_PORT\3/g" $file
+      sed -i -r "s/(\s<entry\skey=\"passwd\">)(.*)(<\/entry>)/\1plain:$POSTGRES_PWD\3/g" $file
+      sed -i -r "s/(\s<entry\skey=\"host\">)(.*)(<\/entry>)/\1$POSTGRES_HOST\3/g" $file
+      sed -i -r "s/(\s<entry\skey=\"user\">)(.*)(<\/entry>)/\1$POSTGRES_USER\3/g" $file
+    done

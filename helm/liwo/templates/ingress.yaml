@@ -12,7 +12,7 @@ metadata:
 spec:
   rules:
   {{- if eq .Values.ingress.environment "rws" }}
-  - host: {{ .Values.prefix }}-{{ .Values.ingress.host }}
+  - host: {{ .Values.ingress.host }}
     http:
   {{- else if eq .Values.ingress.environment "google"}}
   - http:
@@ -21,7 +21,7 @@ spec:
       {{- range .Values.ingress.services}}
       - path: {{ .path }}
         backend:
-          serviceName: {{ .Values.prefix }}-{{ .name }}
+          serviceName: {{ $.Values.prefix }}-{{ .name }}
           servicePort: {{ .port }}
       {{- end }}
 {{- end }}

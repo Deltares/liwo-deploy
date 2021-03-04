@@ -8,6 +8,10 @@ spec:
 {{- if not .Values.backend.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
+{{- if not .Values.RWS}}
+  strategy:
+   type: Recreate
+{{- end}}
   selector:
     matchLabels:
       app: {{ .Values.prefix }}-{{ .Values.backend.name }}
@@ -20,7 +24,10 @@ spec:
       labels:
         app: {{ .Values.prefix }}-{{ .Values.backend.name }}
     spec:
-      volumes:        
+      volumes:
+        - name: google-cred
+          secret:
+            secretName: {{ .Values.prefix }}-google-secret        
         - name: backend-volume
         {{- if .Values.RWS }}
           nfs:
@@ -47,17 +54,24 @@ spec:
             - name: {{ .key }}
               value: {{ .value }}
             {{- end }}
+      {{- if not .Values.RWS}}
       initContainers:
         - name: download-data
-          image: eu.gcr.io/liwo-11205260-011/cloudsync
+          image: "{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}"
           command: ['sh', '-c']
-          args: ['if [ ! -f geoserver/data-volledig.zip ]; then mkdir geoserver; echo "download geoserver data"; gsutil cp gs://liwo-data/data-volledig.zip geoserver/data-volledig.zip; cd geoserver; unzip data-volledig.zip; fi']
+          args: ['test ! -f geoserver/data-volledig.zip && mkdir geoserver && echo "download geoserver data" && gsutil cp gs://liwo-data/data-volledig.zip geoserver/data-volledig.zip && cd geoserver && unzip data-volledig.zip || echo "data already present"']
           workingDir: /data
           env:
             {{- range .Values.backend.environment_variables_init }}
             - name: {{ .key }}
               value: {{ .value }}
             {{- end }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/root/creds/google_credentials.json"
           volumeMounts:
             - name: backend-volume
               mountPath: /data
+            - name: google-cred
+              mountPath: "/root/creds"
+              readOnly: true
+      {{- end }}

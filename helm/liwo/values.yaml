@@ -4,19 +4,44 @@
 
 replicaCount: 1
 
+RWS: true
+prefix: test
+
+datasets:
+  database:
+    dump: db_liwo.backup20201208
+    init: load-db.sh
+  geoserver:
+    data: data-volledig.zip
+
+credentials:
+  google:
+    project_id:
+    private_key_id:
+    private_key:
+    client_email:
+    client_id:
+
 images:
   backend: 
     repository: deltares/liwo-services
-    tag: "latest"
+    tag: "0.3"
   database:
     repository: postgis/postgis
     tag: "9.6-2.5"
   geoserver:
+    # TODO: swich geoserver container. Need to run ETL with new geoserver container
+    # repository: kartoza/geoserver
+    # tag: "2.18.2"
     repository: oscarfonts/geoserver
-    tag: "2.12.1"
+    tag: "2.12.2"
   frontend:
     repository: deltares/liwo-static
     tag: "latest"
+  init:
+    repository: eu.gcr.io/liwo-11205260-011/cloudsync
+    tag: "latest"
+
   imagePullSecrets: []
   imagePullPolicy: Always
 
@@ -24,9 +49,11 @@ backend:
   name: "liwo-backend"
   podAnnotations: {}
 
+  volumeName: "backend-pvc-test"
+
   service:
-    type: ClusterIP
-    port: 5000
+    type: NodePort
+    port: 80
 
   autoscaling:
     enabled: false
@@ -37,6 +64,10 @@ backend:
   environment_variables:
     - key: SQLALCHEMY_DATABASE_URI
       value: 
+    - key: WEBSERVICE_URL
+      value: 
+    - key: DATA_DIR
+      value: /data
 
   resources: {}
 
@@ -44,8 +75,10 @@ database:
   name: "liwo-database"
   podAnnotations: {}
 
+  volumeName: "database-pvc-test"
+
   service:
-    type: ClusterIP
+    type: NodePort
     port: 5432
 
   autoscaling:
@@ -55,13 +88,12 @@ database:
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
-  environment_variables:
-    - key: POSTGRES_PASSWORD
-      value:
-    - key: POSTGRES_USER
-      value:
-    - key: POSTGRES_DB
-      value:
+  postgres_user: postgres
+  postgres_password:
+  postgres_db: postgres
+  postgres_port: 5432
+
+  environment_variables: []
 
   resources: {}
 
@@ -70,7 +102,7 @@ frontend:
   podAnnotations: {}
 
   service:
-    type: ClusterIP
+    type: NodePort
     port: 80
 
   autoscaling:
@@ -81,8 +113,8 @@ frontend:
     # targetMemoryUtilizationPercentage: 80
 
   environment_variables:
-    - key: https_proxy
-      value: webproxy.rws.nl:8080
+    # - key: https_proxy
+    #   value: webproxy.rws.nl:8080
   
   resources: {}
 
@@ -90,8 +122,10 @@ geoserver:
   name: "liwo-geoserver"
   podAnnotations: {}
 
+  volumeName: "geoserver-pvc-test"
+
   service:
-    type: ClusterIP
+    type: NodePort
     port: 8080
 
   autoscaling:
@@ -101,27 +135,46 @@ geoserver:
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
+  environment_variables: []
+    # Environment variables for new container
+    # - key: GEOSERVER_DATA_DIR
+    #   value: /var/local/geoserver
+    # - key: GEOSERVER_ADMIN_USER
+    #   value:
+    # - key: GEOSERVER_ADMIN_PASSWORD
+    #   value:
+    # - key: INITIAL_MEMORY
+    #   value: 2G
+    # - key: MAXIMUM_MEMORY
+    #   value: 2G
+    # - key: EXISTING_DATA_DIR
+    #   value: true
+
+  # If no storage type is defined dynamic provisioned volume used
+  # storage_type:
+
   resources: {}
 
-nfs:
-  path:
-  server:
+# RWS specific nfs mount options
+# nfs:
+#   path:
+#   server:
 
 ingress:
-  environment: rws
-  host: 
-  enabled: false
-  annotations: {}
+  environment: google
+  host:
+  enabled: true
   # gcloud compute addresses create overstroomik-static-ip --global
-  # gcloud endpoints services deploy openapi.yaml
-  # kubernetes.io/ingress.global-static-ip-name: "overstroomik-static-ip"
+  # gcloud compute addresses list
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "liwo-static-ip"
   services:
     - name: liwo-geoserver
-      path: /geoserver/
+      path: /geoserver/*
       port: 8080
     - name: liwo-backend
-      path: /liwo.ws/
-      port: 5000
+      path: /liwo.ws/*
+      port: 80
     - name: liwo-frontend
-      path: /
+      path: /*
       port: 80

@@ -8,6 +8,10 @@ spec:
 {{- if not .Values.database.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
+{{- if not .Values.RWS}}
+  strategy:
+   type: Recreate
+{{- end}}
   selector:
     matchLabels:
       app: {{ .Values.prefix }}-{{ .Values.database.name }}
@@ -20,7 +24,10 @@ spec:
       labels:
         app: {{ .Values.prefix }}-{{ .Values.database.name }}
     spec:
-      volumes:        
+      volumes:
+        - name: google-cred
+          secret:
+            secretName: {{ .Values.prefix }}-google-secret         
         - name: database-volume
         {{- if .Values.RWS }}
           nfs:
@@ -43,24 +50,32 @@ spec:
             - name: {{ .key }}
               value: {{ .value }}
             {{- end }}
+            - name: POSTGRES_USER
+              value: "{{ .Values.database.postgres_user }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ .Values.database.postgres_password }}"
+            - name: POSTGRES_DB
+              value: "{{ .Values.database.postgres_db }}"
           volumeMounts:
             - name: database-volume
               mountPath: /docker-entrypoint-initdb.d
               subPath: database
-            # - name: nfs-volume
-            #   mountPath: /var/lib/postgresql/data
-            #   subPath: database/data
       initContainers:
         - name: download-data
-          image: eu.gcr.io/liwo-11205260-011/cloudsync
+          image: "{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}"
           command: ['sh', '-c']
-          args: ['mkdir database; echo "download database dump"; gsutil cp gs://liwo-data/db_liwo.backup20201208 database/db.backup; gsutil cp gs://liwo-data/load-db.sh database/load-db.sh']
+          args: ['test ! -f database/db.backup && mkdir database && echo "download database dump" && gsutil cp gs://liwo-data/{{ .Values.datasets.database.dump }} database/db.backup && gsutil cp gs://liwo-data/{{ .Values.datasets.database.init }} database/{{ .Values.datasets.database.init }}']
           workingDir: /data
           env:
             {{- range .Values.database.environment_variables_init }}
             - name: {{ .key }}
               value: {{ .value }}
             {{- end }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/root/creds/google_credentials.json"
           volumeMounts:
             - name: database-volume
               mountPath: /data
+            - name: google-cred
+              mountPath: "/root/creds"
+              readOnly: true
